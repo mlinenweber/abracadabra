@@ -14,8 +14,13 @@ def get_cursor():
     try:
         conn = sqlite3.connect(settings.DB_PATH, timeout=30)
         yield conn, conn.cursor()
+    except Exception as error:
+        logging.error(f"Exception during sqlite.connect: {error}")
     finally:
-        conn.close()
+        try:
+            conn.close()
+        except Exception as error:
+            logging.error(f"Exception during sqlite.close: {error}")
 
 
 def setup_db():
