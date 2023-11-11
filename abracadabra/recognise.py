@@ -32,17 +32,25 @@ def get_song_info(filename):
     return (artist, tag.album, tag.title)
 
 
-def register_song(filename):
+def register_song(filename, info=None):
     """Register a single song.
 
     Checks if the song is already registered based on path provided and ignores
     those that are already registered.
 
-    :param filename: Path to the file to register"""
+    :param filename: Path to the file to register
+    :param info: Song meta data. If None, this is extraced from the file ID3 tags.
+                 If specified provide a tuple of (artist, albumartist, title)
+    """
     if song_in_db(filename):
+        logging.info(f"Song already in DB: {filename}")
         return
     hashes = fingerprint_file(filename)
-    song_info = get_song_info(filename)
+    if info is not None:
+        song_info = info
+    else:
+        song_info = get_song_info(filename)
+
     try:
         logging.info(f"{current_process().name} waiting to write {filename}")
         with lock:
