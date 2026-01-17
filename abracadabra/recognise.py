@@ -11,6 +11,15 @@ from .storage import store_song, get_matches, get_info_for_song_id, song_in_db, 
 KNOWN_EXTENSIONS = ["mp3", "wav", "flac", "m4a"]
 
 
+def pool_init_global(l):
+    """Init function that makes a lock available to each of the workers in
+    the pool. Allows synchronisation of db writes since SQLite only supports
+    one writer at a time.
+    """
+    global lock
+    lock = l
+    logging.info(f"Pool init in {current_process().name}")
+
 def get_song_info(filename):
     """Gets the ID3 tags for a file. Returns None for tuple values that don't exist.
 
@@ -54,15 +63,6 @@ def register_directory(path):
 
     :param path: Path of directory to register
     """
-    def pool_init(l):
-        """Init function that makes a lock available to each of the workers in
-        the pool. Allows synchronisation of db writes since SQLite only supports
-        one writer at a time.
-        """
-        global lock
-        lock = l
-        logging.info(f"Pool init in {current_process().name}")
-
     to_register = []
     for root, _, files in os.walk(path):
         for f in files:
@@ -71,7 +71,7 @@ def register_directory(path):
             file_path = os.path.join(path, root, f)
             to_register.append(file_path)
     l = Lock()
-    with Pool(settings.NUM_WORKERS, initializer=pool_init, initargs=(l,)) as p:
+    with Pool(settings.NUM_WORKERS, initializer=pool_init_global, initargs=(l,)) as p:
         p.map(register_song, to_register)
     # speed up future reads
     checkpoint_db()

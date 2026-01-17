@@ -6,11 +6,13 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
+        "audioop-lts",
         "click",
         "numpy",
         "PyAudio",
         "pydub",
         "scipy",
+        "simple_settings",
         "tinytag"
     ],
     entry_points='''
