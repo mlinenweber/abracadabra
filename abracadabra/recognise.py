@@ -1,88 +1,8 @@
-import os
 import logging
-from multiprocessing import Pool, Lock, current_process
 import numpy as np
-from tinytag import TinyTag
-from . import settings
-from .record import record_audio
 from .fingerprint import fingerprint_file, fingerprint_audio
-from .storage import store_song, get_matches, get_info_for_song_id, song_in_db, checkpoint_db
-
-KNOWN_EXTENSIONS = ["mp3", "wav", "flac", "m4a"]
-
-
-def pool_init_global(l):
-    """Init function that makes a lock available to each of the workers in
-    the pool. Allows synchronisation of db writes since SQLite only supports
-    one writer at a time.
-    """
-    global lock
-    lock = l
-    logging.info(f"Pool init in {current_process().name}")
-
-def get_song_info(filename):
-    """Gets the ID3 tags for a file. Returns None for tuple values that don't exist.
-
-    :param filename: Path to the file with tags to read
-    :returns: (artist, album, title)
-    :rtype: tuple(str/None, str/None, str/None)
-    """
-    tag = TinyTag.get(filename)
-    artist = tag.artist if tag.albumartist is None else tag.albumartist
-    return (artist, tag.album, tag.title)
-
-
-def register_song(filename, info=None):
-    """Register a single song.
-
-    Checks if the song is already registered based on path provided and ignores
-    those that are already registered.
-
-    :param filename: Path to the file to register
-    :param info: Song meta data. If None, this is extraced from the file ID3 tags.
-                 If specified provide a tuple of (artist, albumartist, title)
-    """
-    if song_in_db(filename):
-        logging.info(f"Song already in DB: {filename}")
-        return
-    hashes = fingerprint_file(filename)
-    if info is not None:
-        song_info = info
-    else:
-        song_info = get_song_info(filename)
-
-    try:
-        logging.info(f"{current_process().name} waiting to write {filename}")
-        with lock:
-            logging.info(f"{current_process().name} writing {filename}")
-            store_song(hashes, song_info)
-            logging.info(f"{current_process().name} wrote {filename}")
-    except NameError:
-        logging.info(f"Single-threaded write of {filename}")
-        # running single-threaded, no lock needed
-        store_song(hashes, song_info)
-
-
-def register_directory(path):
-    """Recursively register songs in a directory.
-
-    Uses :data:`~abracadabra.settings.NUM_WORKERS` workers in a pool to register songs in a
-    directory.
-
-    :param path: Path of directory to register
-    """
-    to_register = []
-    for root, _, files in os.walk(path):
-        for f in files:
-            if f.split('.')[-1] not in KNOWN_EXTENSIONS:
-                continue
-            file_path = os.path.join(path, root, f)
-            to_register.append(file_path)
-    l = Lock()
-    with Pool(settings.NUM_WORKERS, initializer=pool_init_global, initargs=(l,)) as p:
-        p.map(register_song, to_register)
-    # speed up future reads
-    checkpoint_db()
+from .record import record_audio
+from .storage import get_matches, get_info_for_song_id
 
 
 def score_match(offsets):
@@ -136,7 +56,7 @@ def recognise_song(filename):
     formats in :data:`recognise.KNOWN_FORMATS`.
 
     :param filename: Path of file to be recognised.
-    :returns: :func:`~abracadabra.recognise.get_song_info` result for matched song or None.
+    :returns: :func:`~abracadabra.utils.get_song_info` result for matched song or None.
     :rtype: tuple(str, str, str)
     """
     hashes = fingerprint_file(filename)
@@ -156,7 +76,7 @@ def listen_to_song(filename=None):
     into :func:`~abracadabra.record.gen_many_tests`.
 
     :param filename: The path to store the recorded sample (optional)
-    :returns: :func:`~abracadabra.recognise.get_song_info` result for matched song or None.
+    :returns: :func:`~abracadabra.utils.get_song_info` result for matched song or None.
     :rtype: tuple(str, str, str)
     """
     audio = record_audio(filename=filename)

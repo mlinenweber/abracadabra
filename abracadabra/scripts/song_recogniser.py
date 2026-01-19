@@ -1,7 +1,8 @@
 import os
 import click
-import abracadabra.storage as storage
 import abracadabra.recognise as recog
+import abracadabra.register as regist
+import abracadabra.storage as storage
 
 
 @click.group()
@@ -13,9 +14,9 @@ def cli():
 @click.argument("path")
 def register(path):
     if os.path.isdir(path):
-        recog.register_directory(path)
+        regist.register_directory(path)
     else:
-        recog.register_song(path)
+        regist.register_song(path)
 
 
 @click.command(help="Recognise a song at a filename or using the microphone")
