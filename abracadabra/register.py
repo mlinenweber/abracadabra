@@ -1,22 +1,22 @@
 import os
 import logging
-from multiprocessing import Pool, Lock, current_process
+from multiprocessing import Pool
 from . import settings
 from .fingerprint import fingerprint_file
-from .storage import store_song, song_in_db, checkpoint_db
+from .storage import store_song, store_songs, song_in_db, get_cursor
 from .utils import get_song_info
 
 KNOWN_EXTENSIONS = ["mp3", "wav", "flac", "m4a"]
 
 
-def pool_init_global(l):
-    """Init function that makes a lock available to each of the workers in
-    the pool. Allows synchronisation of db writes since SQLite only supports
-    one writer at a time.
-    """
-    global lock
-    lock = l
-    logging.info(f"Pool init in {current_process().name}")
+def _fingerprint_worker(filename):
+    """Worker for pool that fingerprints a file."""
+    if song_in_db(filename):
+        logging.info(f"Song already in DB: {filename}")
+        return None
+    hashes = fingerprint_file(filename)
+    song_info = get_song_info(filename)
+    return hashes, song_info
 
 
 def register_song(filename, info=None):
@@ -38,16 +38,7 @@ def register_song(filename, info=None):
     else:
         song_info = get_song_info(filename)
 
-    try:
-        logging.info(f"{current_process().name} waiting to write {filename}")
-        with lock:
-            logging.info(f"{current_process().name} writing {filename}")
-            store_song(hashes, song_info)
-            logging.info(f"{current_process().name} wrote {filename}")
-    except NameError:
-        logging.info(f"Single-threaded write of {filename}")
-        # running single-threaded, no lock needed
-        store_song(hashes, song_info)
+    store_song(hashes, song_info)
 
 
 def register_directory(path):
@@ -66,8 +57,15 @@ def register_directory(path):
                 continue
             file_path = os.path.join(path, root, f)
             to_register.append(file_path)
-    l = Lock()
-    with Pool(settings.NUM_WORKERS, initializer=pool_init_global, initargs=(l,)) as p:
-        p.map(register_song, to_register)
-    # speed up future reads
-    checkpoint_db()
+
+    with get_cursor() as (conn, c):
+        batch = []
+        with Pool(settings.NUM_WORKERS) as p:
+            for result in p.imap_unordered(_fingerprint_worker, to_register):
+                if result:
+                    batch.append(result)
+                    if len(batch) >= 100:
+                        store_songs(batch, conn=conn)
+                        batch = []
+            if batch:
+                store_songs(batch, conn=conn)

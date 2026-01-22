@@ -45,3 +45,12 @@ DB_PATH = "hash.db"
 
 NUM_WORKERS = 24
 """ Number of workers to use when registering songs. """
+
+DB_CONFIG = {
+    'user': 'root',           # Your MySQL username
+    'password': '',   # Your MySQL password
+    'host': '127.0.0.1',      # MySQL host (localhost)
+    'database': 'abracadabra',# The name of the database
+    'port': 3306,             # MySQL port (default is 3306)
+    'raise_on_warnings': True
+}
