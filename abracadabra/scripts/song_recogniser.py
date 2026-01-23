@@ -37,6 +37,12 @@ def recognise(path, listen):
         click.echo(result)
 
 
+@click.command(help="Record a song from the microphone")
+@click.argument("path")
+def record(path):
+    recog.record_audio(filename=path)
+
+
 @click.command(help="Register a song or a directory of songs")
 @click.argument("path")
 def register(path):
@@ -49,6 +55,7 @@ def register(path):
 cli.add_command(info)
 cli.add_command(initialise)
 cli.add_command(recognise)
+cli.add_command(record)
 cli.add_command(register)
 
 if __name__ == "__main__":
