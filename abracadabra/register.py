@@ -1,9 +1,9 @@
-import os
 import logging
-from multiprocessing import Pool, Lock, current_process
+import os
+from multiprocessing import Lock, Pool, current_process
 from . import settings
 from .fingerprint import fingerprint_file
-from .storage import store_song, song_in_db, checkpoint_db
+from .storage import checkpoint_db, song_in_db, store_song
 from .utils import get_song_info
 
 KNOWN_EXTENSIONS = ["mp3", "wav", "flac", "m4a"]

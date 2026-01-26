@@ -1,8 +1,8 @@
 import os
-import wave
 import threading
-import pyaudio
+import wave
 import numpy as np
+import pyaudio
 
 CHUNK = 1024
 """Number of frames to buffer before writing."""

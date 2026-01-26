@@ -1,9 +1,9 @@
 import uuid
 import numpy as np
-from . import settings
 from pydub import AudioSegment
-from scipy.signal import spectrogram
 from scipy.ndimage import maximum_filter
+from scipy.signal import spectrogram
+from . import settings
 
 
 def my_spectrogram(audio):

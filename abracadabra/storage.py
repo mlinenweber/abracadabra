@@ -1,5 +1,6 @@
-import uuid
+import logging
 import sqlite3
+import uuid
 from collections import defaultdict
 from contextlib import contextmanager
 from . import settings

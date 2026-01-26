@@ -1,8 +1,7 @@
-import logging
 import numpy as np
-from .fingerprint import fingerprint_file, fingerprint_audio
+from .fingerprint import fingerprint_audio, fingerprint_file
 from .record import record_audio
-from .storage import get_matches, get_info_for_song_id
+from .storage import get_info_for_song_id, get_matches
 
 
 def score_match(offsets):
