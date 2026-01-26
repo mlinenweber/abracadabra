@@ -106,3 +106,10 @@ def get_info_for_song_id(song_id):
     with get_cursor() as (conn, c):
         c.execute("SELECT artist, album, title FROM song_info WHERE song_id = ?", (song_id,))
         return c.fetchone()
+
+
+def get_song_ids(album, title):
+    """Get song_ids for a given album and title."""
+    with get_cursor() as (conn, c):
+        c.execute("SELECT song_id FROM song_info WHERE album LIKE ? AND title = ?", (album, title))
+        return [r[0] for r in c.fetchall()]

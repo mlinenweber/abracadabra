@@ -52,6 +52,14 @@ def register(path):
         regist.register_song(path)
 
 
+@click.command(help="Get song IDs for a given album and title")
+@click.argument("album")
+@click.argument("title")
+def get_song_ids(album, title):
+    click.echo(storage.get_song_ids(album, title))
+
+
+cli.add_command(get_song_ids)
 cli.add_command(info)
 cli.add_command(initialise)
 cli.add_command(recognise)
