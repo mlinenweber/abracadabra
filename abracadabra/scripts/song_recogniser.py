@@ -59,12 +59,20 @@ def get_song_ids(album, title):
     click.echo(storage.get_song_ids(album, title))
 
 
+@click.command(help="Get score for a filename against a song_id")
+@click.argument("filename")
+@click.argument("song_id")
+def score(filename, song_id):
+    click.echo(recog.get_score(filename, song_id))
+
+
 cli.add_command(get_song_ids)
 cli.add_command(info)
 cli.add_command(initialise)
 cli.add_command(recognise)
 cli.add_command(record)
 cli.add_command(register)
+cli.add_command(score)
 
 if __name__ == "__main__":
     cli()

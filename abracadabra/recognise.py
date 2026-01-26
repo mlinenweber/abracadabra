@@ -1,7 +1,8 @@
+from collections import defaultdict
 import numpy as np
 from .fingerprint import fingerprint_audio, fingerprint_file
 from .record import record_audio
-from .storage import get_info_for_song_id, get_matches
+from .storage import get_hashes_for_song_id, get_info_for_song_id, get_matches
 
 
 def score_match(offsets):
@@ -69,6 +70,24 @@ def recognise_song(filename):
     if info is not None:
         return info
     return matched_song
+
+
+def get_score(filename, song_id):
+    """Scores a filename against a specific song_id."""
+    hashes = fingerprint_file(filename)
+    db_hashes = get_hashes_for_song_id(song_id)
+
+    db_hash_dict = defaultdict(list)
+    for h, t in db_hashes:
+        db_hash_dict[h].append(t)
+
+    offsets = []
+    for h, t, _ in hashes:
+        if h in db_hash_dict:
+            for db_t in db_hash_dict[h]:
+                offsets.append((db_t, t))
+
+    return score_match(offsets)
 
 
 def listen_to_song(filename=None):

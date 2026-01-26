@@ -101,6 +101,18 @@ def get_matches(hashes, threshold=5):
     return result_dict
 
 
+def get_hashes_for_song_id(song_id):
+    """Get all hashes for a given song_id.
+
+    :param song_id: The song_id to get hashes for.
+    :returns: A list of tuples of the form (hash, offset).
+    :rtype: list(tuple(int, float))
+    """
+    with get_cursor() as (conn, c):
+        c.execute("SELECT hash, offset FROM hash WHERE song_id = ?", (song_id,))
+        return c.fetchall()
+
+
 def get_info_for_song_id(song_id):
     """Lookup song information for a given ID."""
     with get_cursor() as (conn, c):
