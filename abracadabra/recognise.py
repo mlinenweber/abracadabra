@@ -35,6 +35,7 @@ def best_match(matches):
     :returns: song_id with the best score.
     :rtype: str
     """
+    print(f"\nYOYO matches.LEN:{len(matches)}")
     matched_song = None
     best_score = 0
     for song_id, offsets in matches.items():
@@ -43,6 +44,9 @@ def best_match(matches):
             continue
         score = score_match(offsets)
         if score > best_score:
+            print(f"song_id:{song_id} score:{score}")
+            info = get_info_for_song_id(song_id)
+            print(f"\tinfo:{info}")
             best_score = score
             matched_song = song_id
     return matched_song
